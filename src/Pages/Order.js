@@ -1,26 +1,79 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FlatList, Image, View, Alert } from 'react-native'
 import { Button, Card, Text, Icon } from "@rneui/themed"
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIsFocused } from '@react-navigation/native';
 
-const cartUser = [
-    {
-        "id": 1,
-        "name": "makanan",
-        "type": 0,
-        "price": 25000,
-        "image": "https://img.freepik.com/free-photo/delicious-healthy-asian-food-gray-textured-background-with-copy-space_24972-1024.jpg?w=1480&t=st=1665829627~exp=1665830227~hmac=39fef814ca7eb86c36f3d70688e3c3763e5e88612df412f2e0b6da4bcf9bf83f"
-    },
-    {
-        "id": 2,
-        "name": "minuman",
-        "type": 1,
-        "price": 15000,
-        "image": "https://img.freepik.com/free-photo/delicious-healthy-asian-food-gray-textured-background-with-copy-space_24972-1024.jpg?w=1480&t=st=1665829627~exp=1665830227~hmac=39fef814ca7eb86c36f3d70688e3c3763e5e88612df412f2e0b6da4bcf9bf83f"
+const Order = () => {
+    const isFocused = useIsFocused()
+
+    const [cartUser, setCartUser] = useState([])
+
+    useEffect(() => {
+        if (isFocused) {
+            AsyncStorage.getItem("@AddCart")
+                .then((values) => {
+                    if (values !== null) {
+                        setCartUser(JSON.parse(values))
+                        console.log('data cartuser', values)
+                    } else {
+                        setCartUser([])
+                    }
+                })
+                .catch((error) => {
+                    console.log(error)
+                })
+        }
+    }, [isFocused])
+
+    const clear = async () => {
+        AsyncStorage.removeItem("@AddCart")
+        console.log('berhasil remove')
+        setCartUser([])
     }
-];
 
-const Order = (props) => {
+    const btCheckout = async () => {
+        Alert.alert(
+            "Confirmation",
+            "Are you sure to make an order?",
+            [
+                {
+                    text: "Cancel",
+                    onPress: () => console.log("Cancel Pressed"),
+                    style: "cancel"
+                },
+                { text: "OK", onPress: () => clear() }
+            ]
+        );
+    }
+
+    const totalPayment = () => {
+        let total = 0;
+        cartUser.forEach(item => {
+            total += item.price * item.qty
+        })
+        return total
+    }
+
+    const btInc = (idx) => {
+        let temp = [...cartUser]
+        temp[idx].qty += 1
+        AsyncStorage.setItem("@AddCart", JSON.stringify(temp))
+        setCartUser(temp)
+    }
+
+    const btDec = (idx) => {
+        let temp = [...cartUser]
+        if (temp[idx].qty == 1) {
+            temp.splice(idx, 1)
+        } else {
+            temp[idx].qty -= 1
+        }
+        AsyncStorage.setItem("@AddCart", JSON.stringify(temp))
+        setCartUser(temp)
+    }
+
     return (
         <View style={{ flex: 1, backgroundColor: "white" }}>
             <Text h2>Detail Order</Text>
@@ -35,16 +88,18 @@ const Order = (props) => {
                                 <Text>Rp. {item.price}</Text>
                             </View>
                             <View style={{ flexDirection: "row" }}>
-                                <Button type="outline" icon={
-                                    <Icon type="feather" name="minus" size={15} />
-                                }
-                                // onPress={() => btDec(index)}
+                                <Button type="outline" buttonStyle={{ borderColor: 'tomato', borderRadius: 50 }}
+                                    icon={
+                                        <Icon type="feather" name="minus" size={16} color="tomato" />
+                                    }
+                                    onPress={() => btDec(index)}
                                 />
-                                <Text h4 style={{ marginHorizontal: 10 }}>1</Text>
-                                <Button type="outline" icon={
-                                    <Icon type="feather" name="plus" size={15} />
-                                }
-                                // onPress={() => btInc(index)} 
+                                <Text h4 style={{ marginHorizontal: 10 }}>{item.qty}</Text>
+                                <Button type="outline" buttonStyle={{ borderColor: 'tomato', borderRadius: 50 }}
+                                    icon={
+                                        <Icon type="feather" name="plus" size={16} color="tomato" />
+                                    }
+                                    onPress={() => btInc(index)}
                                 />
                             </View>
                         </View>
@@ -56,12 +111,12 @@ const Order = (props) => {
             <View style={{ padding: wp(3), flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                 <View>
                     <Text>Total Payment</Text>
-                    <Text h4>Rp. 40000</Text>
+                    <Text h4>Rp. {totalPayment()}</Text>
                 </View>
                 <Button
                     title="Checkout"
                     buttonStyle={{ backgroundColor: "tomato", borderRadius: 5 }}
-                // onPress={btCheckout}
+                    onPress={btCheckout}
                 />
             </View>
         </View>

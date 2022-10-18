@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import { Alert, FlatList, Image, KeyboardAvoidingView, ScrollView, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { FlatList, Image, KeyboardAvoidingView, ScrollView, View } from 'react-native';
 import { Button, Card, Icon, Input, Text } from '@rneui/themed';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIsFocused } from '@react-navigation/native';
 
 const DetailProduct = (props) => {
+    const isFocused = useIsFocused()
+
     const { detail } = props.route.params
     const [qty, setQty] = useState(1)
 
@@ -20,23 +23,48 @@ const DetailProduct = (props) => {
         setQty(parseInt(tempValue));
     }
 
+    useEffect(() => {
+        if (isFocused) {
+            console.log('asdasdasd')
+            AsyncStorage.getItem('@AddCart')
+                .then((values) => {
+                    console.log('object', values)
+                    if (values !== null) {
+                        const cart = JSON.parse(values)
+                        console.log('ini dari cart', cart)
+                        let searchProduct = cart.filter(val => val.id == detail.id)
+                        if (searchProduct.length > 0) {
+                            setQty(searchProduct[0].qty)
+                        }
+                    }
+                })
+        }
+    }, [isFocused])
+
     const btAddToCart = async () => {
         try {
-            await AsyncStorage.setItem(
-                `@AddCart`, JSON.stringify([detail])
-            )
-            console.log('sukses')
+            AsyncStorage.getItem(`@AddCart`)
+                .then(cart => {
+                    cart = cart == null ? [] : JSON.parse(cart)
+                    // let temp = [...cart]
+                    let idxSearchProduct = null;
+                    const searchProduct = cart.filter((val, idx) => {
+                        if (val.id == detail.id) {
+                            idxSearchProduct = idx
+                            return val
+                        }
+                    })
+                    if (searchProduct.length > 0) {
+                        cart[idxSearchProduct].qty = qty
+                    } else {
+                        cart.push({ ...detail, qty })
+                    }
+                    console.log('sukses')
+                    return AsyncStorage.setItem(`@AddCart`, JSON.stringify(cart))
+                })
+            props.navigation.goBack()
         } catch (error) {
             console.log(error)
-        }
-    }
-
-    const btGetcart = async () => {
-        try {
-            const value = await AsyncStorage.getItem('@AddCart');
-            console.log('value', value)
-        } catch (error) {
-            console.log('error', error)
         }
     }
 
@@ -56,7 +84,7 @@ const DetailProduct = (props) => {
                 <Card containerStyle={{ width: wp(100), margin: 0 }}>
                     <Text style={{ fontWeight: "bold", fontSize: 25 }}>{detail.name}</Text>
                     <ScrollView style={{ height: hp(10), marginBottom: hp(2) }}>
-                        <Text style={{ textAlign: "justify" }}>EnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnakEnak</Text>
+                        <Text style={{ textAlign: "justify" }}>{detail.description}</Text>
                     </ScrollView>
                     <Card.Divider />
                     <Text style={{ fontSize: 20 }}>Rp. {detail.price}</Text>
@@ -101,9 +129,6 @@ const DetailProduct = (props) => {
                         }
                         iconRight
                         onPress={btAddToCart}
-                    />
-                    <Button
-                        onPress={btGetcart}
                     />
                 </Card>
             </View>

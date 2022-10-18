@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from 'react-redux';
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { loginAction } from "../redux/actions";
 import { View, StyleSheet } from "react-native";
-import { Button, Text, Input, Icon } from "@rneui/themed";
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
+import { Button, Text, Input } from "@rneui/themed";
+import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { StackActions } from "@react-navigation/native";
+import { useIsFocused } from "@react-navigation/native";
 
 const Home = (props) => {
+    const isFocused = useIsFocused()
     const dispatch = useDispatch()
 
     const [tableNumber, setTableNumber] = useState("")
@@ -19,8 +20,10 @@ const Home = (props) => {
     })
 
     useEffect(() => {
-        if (iduser) {
-            props.navigation.dispatch(StackActions.replace("TabNavigation"))
+        if (isFocused) {
+            if (iduser) {
+                props.navigation.dispatch(StackActions.replace("TabNavigation"))
+            }
         }
     })
 
@@ -43,20 +46,6 @@ const Home = (props) => {
                     containerStyle={{ width: wp("35%"), alignSelf: "center" }}
                     onChangeText={val => setTableNumber(val)}
                 />
-                {/* <Input
-                    placeholder="password"
-                    inputStyle={{ backgroundColor: "white" }}
-                    leftIcon={
-                        <Icon
-                            type="feather"
-                            name="lock"
-                        />
-                    }
-                    inputContainerStyle={{ backgroundColor: "white" }}
-                    containerStyle={{ width: wp("70%") }}
-                    secureTextEntry
-                    onChangeText={val => setPass(val)}
-                /> */}
                 <Button
                     title="Tap To See Menu"
                     buttonStyle={{ backgroundColor: "tomato" }}

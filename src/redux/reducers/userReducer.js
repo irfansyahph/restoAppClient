@@ -1,6 +1,6 @@
 const INITIAL_STATE = {
     id: null,
-    table_number: ""
+    table_number: null,
 }
 
 export const userReducer = (state = INITIAL_STATE, action) => {

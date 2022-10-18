@@ -49,7 +49,8 @@ const style = StyleSheet.create({
         flexDirection: "row",
         flexWrap: "wrap",
         justifyContent: "space-between",
-        marginHorizontal: wp(3)
+        marginHorizontal: wp(3),
+        marginBottom: wp(3)
     }
 })
 
